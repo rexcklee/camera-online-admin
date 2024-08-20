@@ -7,10 +7,8 @@ import { Button, Form, Input, Space } from "antd";
 import { useAuth } from "@/provider/authProvider";
 import Cookies from "js-cookie";
 
-const auth = new API();
-
 export default function Login() {
-  const { setToken, setCurrentUser } = useAuth();
+  const { token, setToken, setCurrentUser } = useAuth();
   const router = useRouter();
   const [form] = Form.useForm();
   const user = new UserAPI();
@@ -41,14 +39,6 @@ export default function Login() {
       router.replace("/dashboard/category");
     });
   };
-
-  useEffect(() => {
-    //Cookies.get('token')
-    if (Cookies.get("token")) {
-      console.log("Go cat from login");
-      router.replace("/dashboard/category");
-    }
-  }, [auth]);
 
   return (
     <div className="border border-red-400 min-h-screen flex flex-col justify-center items-center">

@@ -17,7 +17,7 @@ export const Sidebar: React.FC = () => {
     API.setCurrentUserToLocalStorage(null);
     API.setTokenToLocalStorage(null);
     Cookies.remove("token");
-    router.push("/login");
+    router.replace("/login");
   };
 
   return (
@@ -37,13 +37,19 @@ export const Sidebar: React.FC = () => {
               Category
             </Link>
           </li>
+          <li key="SubCategory" className="mb-2">
+            <Link href="/dashboard/subCategory" className="text-sm">
+              <MdOutlineCategory className="h-3 w-3 inline-block mr-2" />
+              Sub-Category
+            </Link>
+          </li>
           <li key="User" className="mb-2">
             <Link href="/dashboard/user" className="text-sm">
               <BsPerson className="h-3 w-3 inline-block mr-2" />
               User
             </Link>
           </li>
-          <li key="User" className="mb-2">
+          <li key="Logout" className="mb-2">
             <Button onClick={handleLogout} className="text-sm">
               Log Out
             </Button>

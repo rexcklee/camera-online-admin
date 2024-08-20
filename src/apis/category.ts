@@ -14,27 +14,19 @@ export default class CategoryAPI extends API {
   }
 
   public async addCategory(newCategory: Category): Promise<DataResponse> {
-    return this.post("category/add", newCategory, false);
+    return this.post("category/add", newCategory, true);
   }
+
   public async updateCategory(
-        id: number,
-        name: string,
-        description: string,
-        sort: number,
+    id: number,
+    name: string,
+    description: string,
+    sort: number
   ): Promise<DataResponse> {
-    return this.post(
-      "category/update",
-      {id, name, description, sort},
-      false
-    );
+    return this.post("category/update", { id, name, description, sort }, true);
   }
-  public async deleteCategory(
-    id: number
-  ): Promise<DataResponse> {
-    return this.post(
-      "category/delete",
-      { id: id },
-      false
-    );
+
+  public async deleteCategory(id: number): Promise<DataResponse> {
+    return this.post("category/delete", { id: id }, true);
   }
 }
