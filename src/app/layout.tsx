@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import Providers from "./provider";
 
 import AuthProvider from "@/provider/authProvider";
 
@@ -23,7 +24,7 @@ export default function RootLayout({
         <div>
           <AntdRegistry>
             <AuthProvider>
-              <div>{children}</div>
+              <Providers>{children}</Providers>
             </AuthProvider>
           </AntdRegistry>
         </div>

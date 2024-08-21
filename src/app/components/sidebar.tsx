@@ -2,7 +2,7 @@
 import { Button } from "antd";
 import Link from "next/link";
 import React from "react";
-import { BsShop, BsPerson, BsListCheck } from "react-icons/bs";
+import { BsShop, BsPerson, BsCamera } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
@@ -41,6 +41,12 @@ export const Sidebar: React.FC = () => {
             <Link href="/dashboard/subCategory" className="text-sm">
               <MdOutlineCategory className="h-3 w-3 inline-block mr-2" />
               Sub-Category
+            </Link>
+          </li>
+          <li key="Product" className="mb-2">
+            <Link href="/dashboard/product" className="text-sm">
+              <BsCamera className="h-3 w-3 inline-block mr-2" />
+              Product
             </Link>
           </li>
           <li key="User" className="mb-2">

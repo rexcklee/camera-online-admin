@@ -46,10 +46,10 @@ class API {
   ): Promise<DataResponse> {
     if (path === "") throw new Error("path is empty");
 
-    // const request_path = isProtected ? `/${path}` : `/${path}`;
-    // const url = `${this.apiHost}${request_path}`;
-    
-    const url = `${this.apiHost}/${path}`;
+    const request_path = isProtected ? `/${path}` : `/${path}`;
+    const url = `${this.apiHost}${request_path}`;
+
+    //const url = `${this.apiHost}/${path}`;
     console.log(url);
 
     const headers: Record<string, string> = {

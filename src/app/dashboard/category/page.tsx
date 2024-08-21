@@ -1,5 +1,7 @@
 "use client";
+import { DataResponse } from "@/apis/api";
 import CategoryAPI, { Category } from "@/apis/category";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TableProps } from "antd";
 
 import {
@@ -14,7 +16,7 @@ import {
   InputNumber,
 } from "antd";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
@@ -36,7 +38,6 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
   ...restProps
 }) => {
   const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
-
   return (
     <td {...restProps}>
       {editing ? (
@@ -60,10 +61,8 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
 };
 
 export default function Home() {
-  const [data, setData] = useState<Category[] | null>(null);
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
-  const [tableUpdate, setTableUpdate] = useState(false);
   const [editingKey, setEditingKey] = useState(0);
 
   const category = new CategoryAPI();
@@ -141,10 +140,6 @@ export default function Home() {
     };
   });
 
-  const forceTableUpdate = () => {
-    setTableUpdate((prev) => !prev); // Toggle the state to force re-render
-  };
-
   const showDrawer = () => {
     setOpen(true);
   };
@@ -157,18 +152,14 @@ export default function Home() {
     form.resetFields();
   };
 
-  const onFinish = (input: Category) => {
-    category.addCategory(input).then(() => {
-      form.resetFields();
-      onClose();
-    });
+  const onFinish = (newCategory: Category) => {
+    addCategoryMutation.mutate(newCategory);
+    form.resetFields();
+    onClose();
   };
 
   const handleDelete = (id: number) => {
-    category.deleteCategory(id).then((response) => {
-      console.log(response);
-      forceTableUpdate();
-    });
+    deleteCategoryMutation.mutate(id);
   };
 
   const isEditing = (record: Category) => record.id === editingKey;
@@ -179,35 +170,57 @@ export default function Home() {
   };
 
   const cancel = () => {
+    form.resetFields();
     setEditingKey(0);
   };
 
   const save = async (id: number) => {
     try {
-      const row = (await form.validateFields()) as Category;
-
-      category
-        .updateCategory(id, row.name, row.description, row.sort)
-        .then((response) => {
-          console.log(response);
-          setEditingKey(0);
-          forceTableUpdate();
-        });
+      const updatedInfo = (await form.validateFields()) as Category;
+      updateCategoryMutation.mutate({
+        ...updatedInfo,
+        id: id,
+      });
+      form.resetFields();
+      setEditingKey(0);
     } catch (error) {
       console.log("Validate Failed:", error);
     }
   };
 
-  useEffect(() => {
-    category
-      .getCategories()
-      .then((response) => {
-        setData(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, [open, tableUpdate]);
+  const queryClient = useQueryClient();
+
+  const {
+    data: categoriesData,
+    isPending,
+    isError,
+    error,
+  } = useQuery<DataResponse>({
+    queryKey: ["category", "getall"],
+    queryFn: () => category.getCategories(),
+  });
+
+  const addCategoryMutation = useMutation({
+    mutationFn: (newCategory: Category) => category.addCategory(newCategory),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["category", "getall"] });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: (updatedCategory: Category) =>
+      category.updateCategory(updatedCategory),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["category", "getall"] });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: number) => category.deleteCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["category", "getall"] });
+    },
+  });
 
   return (
     <div className="min-h-full">
@@ -217,8 +230,21 @@ export default function Home() {
           Add
         </Button>
       </div>
-      {data && <h1 className="mb-3">Number of category: {data.length}</h1>}
-      {data && (
+
+      {updateCategoryMutation.isPending && (
+        <span>Updating categories data...</span>
+      )}
+
+      {isPending && <span>Loading categories data...</span>}
+
+      {isError && <span>Error: {error.message}</span>}
+
+      {categoriesData && (
+        <h1 className="mb-3">
+          Number of category: {categoriesData.data.length}
+        </h1>
+      )}
+      {categoriesData && (
         <Form form={form} component={false}>
           <Table
             components={{
@@ -227,7 +253,7 @@ export default function Home() {
               },
             }}
             bordered
-            dataSource={data}
+            dataSource={categoriesData.data}
             columns={mergedColumns}
             rowClassName="editable-row"
             pagination={{

@@ -10,6 +10,7 @@ export interface Category {
 
 export default class CategoryAPI extends API {
   public async getCategories(): Promise<DataResponse> {
+    console.log('category start')
     return this.get("category/get_all", false);
   }
 
@@ -18,12 +19,9 @@ export default class CategoryAPI extends API {
   }
 
   public async updateCategory(
-    id: number,
-    name: string,
-    description: string,
-    sort: number
+    updatedCategory: Category
   ): Promise<DataResponse> {
-    return this.post("category/update", { id, name, description, sort }, true);
+    return this.post("category/update", updatedCategory, true);
   }
 
   public async deleteCategory(id: number): Promise<DataResponse> {
