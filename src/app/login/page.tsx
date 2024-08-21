@@ -31,6 +31,7 @@ export default function Login() {
       setToken(res.data.token);
       setCurrentUser(res.data.currentUser);
       if (res.data.currentUser.isAdmin) {
+        // TODO: set checking isAdmin on server, only send token when isAdmin is true
         Cookies.set("token", res.data.token, {
           expires: 1,
         });

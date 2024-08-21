@@ -1,6 +1,8 @@
 "use client";
+import { DataResponse } from "@/apis/api";
 import CategoryAPI, { Category } from "@/apis/category";
 import SubCategoryAPI, { SubCategory } from "@/apis/subCategory";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TableProps } from "antd";
 
 import {
@@ -41,13 +43,7 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
   form,
   ...restProps
 }) => {
-  //const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
   let inputNode;
-  //   console.log("categ", categories);
-  //   console.log(record);
-
-  //const category = categories!.find((cat) => cat.id === record.categoryId);
-
   if (dataIndex === "categoryId") {
     inputNode = (
       <Select
@@ -93,11 +89,8 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
 };
 
 export default function Home() {
-  const [data, setData] = useState<SubCategory[] | null>(null);
-  const [categories, setCategories] = useState<Category[] | null>(null);
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
-  const [tableUpdate, setTableUpdate] = useState(false);
   const [editingKey, setEditingKey] = useState(0);
 
   const category = new CategoryAPI();
@@ -124,8 +117,10 @@ export default function Home() {
       editable: true,
       render: (_: any, record: SubCategory) => {
         let category;
-        if (categories != null) {
-          category = categories!.find((cat) => cat.id === record.categoryId);
+        if (categoriesData?.data != null) {
+          category = categoriesData.data.find(
+            (cat: Category) => cat.id === record.categoryId
+          );
         }
         return <p>{category && category.name}</p>;
       },
@@ -193,10 +188,6 @@ export default function Home() {
     }
   );
 
-  const forceTableUpdate = () => {
-    setTableUpdate((prev) => !prev); // Toggle the state to force re-render
-  };
-
   const showDrawer = () => {
     setOpen(true);
   };
@@ -209,18 +200,14 @@ export default function Home() {
     form.resetFields();
   };
 
-  const onFinish = (input: SubCategory) => {
-    subCategory.addSubCategory(input).then(() => {
-      form.resetFields();
-      onClose();
-    });
+  const onFinish = (newSubCategory: SubCategory) => {
+    addSubCategoryMutation.mutate(newSubCategory);
+    form.resetFields();
+    onClose();
   };
 
   const handleDelete = (id: number) => {
-    subCategory.deleteSubCategory(id).then((response) => {
-      console.log(response);
-      forceTableUpdate();
-    });
+    deleteSubCategoryMutation.mutate(id);
   };
 
   const isEditing = (record: SubCategory) => record.id === editingKey;
@@ -238,45 +225,57 @@ export default function Home() {
 
   const save = async (id: number) => {
     try {
-      const row = (await form.validateFields()) as SubCategory;
-
-      subCategory
-        .updateSubCategory(
-          id,
-          row.name,
-          row.description,
-          row.categoryId,
-          row.sort
-        )
-        .then((response) => {
-          console.log(response);
-          setEditingKey(0);
-          forceTableUpdate();
-        });
+      const updatedInfo = (await form.validateFields()) as SubCategory;
+      updateSubCategoryMutation.mutate({
+        ...updatedInfo,
+        id: id,
+      });
+      form.resetFields();
+      setEditingKey(0);
     } catch (error) {
       console.log("Validate Failed:", error);
     }
   };
 
-  useEffect(() => {
-    category
-      .getCategories()
-      .then((response) => {
-        setCategories(response.data);
-        console.log("abc", response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-    subCategory
-      .getSubCategories()
-      .then((response) => {
-        setData(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, [open, tableUpdate]);
+  const queryClient = useQueryClient();
+
+  const {
+    data: subcategoriesData,
+    isPending,
+    isError,
+    error,
+  } = useQuery<DataResponse>({
+    queryKey: ["subcategory", "getall"],
+    queryFn: () => subCategory.getSubCategories(),
+  });
+
+  const { data: categoriesData } = useQuery<DataResponse>({
+    queryKey: ["category", "getall"],
+    queryFn: () => category.getCategories(),
+  });
+
+  const addSubCategoryMutation = useMutation({
+    mutationFn: (newSubCategory: SubCategory) =>
+      subCategory.addSubCategory(newSubCategory),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subcategory", "getall"] });
+    },
+  });
+
+  const updateSubCategoryMutation = useMutation({
+    mutationFn: (updatedSubCategory: SubCategory) =>
+      subCategory.updateSubCategory(updatedSubCategory),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subcategory", "getall"] });
+    },
+  });
+
+  const deleteSubCategoryMutation = useMutation({
+    mutationFn: (id: number) => subCategory.deleteSubCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subcategory", "getall"] });
+    },
+  });
 
   return (
     <div className="min-h-full">
@@ -286,24 +285,37 @@ export default function Home() {
           Add
         </Button>
       </div>
-      {data && <h1 className="mb-3">Number of sub-category: {data.length}</h1>}
-      {data && (
+
+      {updateSubCategoryMutation.isPending && (
+        <span>Updating sub-categories data...</span>
+      )}
+
+      {isPending && <span>Loading sub-categories data...</span>}
+
+      {isError && <span>Error: {error.message}</span>}
+
+      {subcategoriesData && (
+        <h1 className="mb-3">
+          Number of sub-category: {subcategoriesData.data.length}
+        </h1>
+      )}
+      {subcategoriesData && (
         <Form form={form} component={false}>
           <Table
             components={{
               body: {
                 cell: (props: any) => (
                   <EditableCell
-                    {...props} // 傳遞所有 EditableCell 的 props
-                    record={data}
-                    categories={categories} // 傳遞 categories
-                    form={form} // 傳遞 form
+                    {...props}
+                    record={subcategoriesData.data}
+                    categories={categoriesData?.data}
+                    form={form}
                   />
                 ),
               },
             }}
             bordered
-            dataSource={data}
+            dataSource={subcategoriesData.data}
             columns={mergedColumns}
             rowClassName="editable-row"
             pagination={{
@@ -349,8 +361,8 @@ export default function Home() {
             rules={[{ required: true, message: "Please select category Id" }]}
           >
             <Select placeholder="Please select category Id">
-              {categories &&
-                categories.map((category) => (
+              {categoriesData &&
+                categoriesData.data.map((category: Category) => (
                   <Select.Option key={category.id} value={category.id}>
                     {category.name}
                   </Select.Option>

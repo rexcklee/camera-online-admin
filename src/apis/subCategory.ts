@@ -19,13 +19,9 @@ export default class SubCategoryAPI extends API {
     }
 
     public async updateSubCategory(
-        id: number,
-        name: string,
-        description: string,
-        categoryId: number,
-        sort: number
+        updatedSubCategory: SubCategory
     ): Promise<DataResponse> {
-        return this.post("subcategory/update", { id, name, description, categoryId, sort }, true);
+        return this.post("subcategory/update", updatedSubCategory, true);
     }
 
     public async deleteSubCategory(id: number): Promise<DataResponse> {

@@ -123,6 +123,7 @@ export default function Home() {
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [editingKey, setEditingKey] = useState(0);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
   const category = new CategoryAPI();
   const subCategory = new SubCategoryAPI();
@@ -244,21 +245,22 @@ export default function Home() {
     form.resetFields();
   };
 
-  const onFinish = (input: Product) => {
-    let subcategory;
-    if (subcategoriesData != null) {
-      subcategory = subcategoriesData!.data.find(
-        (cat: SubCategory) => cat.id === input.subcategoryId
-      );
-    }
-    if (subcategory) {
-      addProductMutation.mutate({
-        ...input,
-        categoryId: subcategory.categoryId,
-      });
-    } else {
-      console.error("Subcategory not found");
-    }
+  const onFinish = (newProduct: Product) => {
+    // let subcategory;
+    // if (subcategoriesData != null) {
+    //   subcategory = subcategoriesData!.data.find(
+    //     (cat: SubCategory) => cat.id === input.subcategoryId
+    //   );
+    // }
+    // if (subcategory) {
+    //   addProductMutation.mutate({
+    //     ...input,
+    //     categoryId: subcategory.categoryId,
+    //   });
+    // } else {
+    //   console.error("Subcategory not found");
+    // }
+    addProductMutation.mutate(newProduct);
     form.resetFields();
     onClose();
   };
@@ -435,7 +437,7 @@ export default function Home() {
             <Input type="number" placeholder="Please enter price" />
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             name="subcategoryId"
             label="SubCategory"
             rules={[{ required: true, message: "Please select sub-category" }]}
@@ -447,6 +449,48 @@ export default function Home() {
                     {subcategory.name}
                   </Select.Option>
                 ))}
+            </Select>
+          </Form.Item> */}
+
+          <Form.Item
+            name="categoryId"
+            label="Category"
+            rules={[
+              { required: true, message: "Please select Category first" },
+            ]}
+          >
+            <Select
+              placeholder="Please select category"
+              onChange={(value) => setSelectedCategoryId(value)}
+            >
+              {categoriesData &&
+                categoriesData.data.map((category: Category) => (
+                  <Select.Option key={category.id} value={category.id}>
+                    {category.name}
+                  </Select.Option>
+                ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="subcategoryId"
+            label="SubCategory"
+            rules={[{ required: true, message: "Please select sub-category" }]}
+          >
+            <Select placeholder="Please select sub-category">
+              {subcategoriesData &&
+                selectedCategoryId &&
+                subcategoriesData.data
+                  .filter(
+                    (subcat: SubCategory) =>
+                      subcat.categoryId ===
+                      selectedCategoryId /*form.getFieldValue("categoryId")*/
+                  )
+                  .map((subcategory: SubCategory) => (
+                    <Select.Option key={subcategory.id} value={subcategory.id}>
+                      {subcategory.name}
+                    </Select.Option>
+                  ))}
             </Select>
           </Form.Item>
 
