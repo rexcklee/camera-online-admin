@@ -19,7 +19,9 @@ import {
   TableProps,
   Typography,
 } from "antd";
+import Link from "next/link";
 import { useState } from "react";
+import { RiArrowGoBackLine } from "react-icons/ri";
 
 interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
@@ -219,7 +221,7 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
     isError,
     error,
   } = useQuery<DataResponse>({
-    queryKey: ["product", id],
+    queryKey: ["product", Number(id)],
     queryFn: () => product.getProductsById(id),
   });
 
@@ -229,7 +231,7 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
   });
 
   const { data: productAttributesByIdData } = useQuery<DataResponse>({
-    queryKey: ["productAttributesById", id],
+    queryKey: ["productAttributesById", Number(id)],
     queryFn: () => productAttribute.getProductAttributesByProductId(Number(id)),
   });
 
@@ -251,7 +253,7 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
         queryKey: ["productAttribute", "getall"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["productAttributesById", id],
+        queryKey: ["productAttributesById", Number(id)],
       });
     },
   });
@@ -264,7 +266,7 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
         queryKey: ["productAttribute", "getall"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["productAttributesById", id],
+        queryKey: ["productAttributesById", Number(id)],
       });
     },
   });
@@ -276,7 +278,7 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
         queryKey: ["productAttribute", "getall"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["productAttributesById", id],
+        queryKey: ["productAttributesById", Number(id)],
       });
     },
   });
@@ -287,9 +289,18 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
   return (
     <div className="min-h-full">
       {productData && (
-        <div className="flex gap-10 mb-2 text-xl">
-          <h1>Product: {productData.data.name}</h1>
-          <p>Price: ${productData.data.price}</p>
+        <div className="flex justify-between mb-6">
+          <div className="flex gap-10 text-xl">
+            <h1>Product: {productData.data.name}</h1>
+            <p>Price: ${productData.data.price}</p>
+          </div>
+          <div className="">
+            <Link href="/dashboard/product">
+              <Button>
+                <RiArrowGoBackLine />
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 
@@ -326,6 +337,7 @@ const ProductAttributesPage = ({ id }: { id: string }) => {
           {attributesData && productAttributesByIdData && (
             <Row gutter={16}>
               {attributesData.data
+                // filter out attributes that already added
                 .filter(
                   (attribute: Attribute) =>
                     !productAttributesByIdData.data

@@ -17,10 +17,12 @@ import {
   Typography,
   InputNumber,
   Select,
+  Radio,
 } from "antd";
 
 import { useState } from "react";
 import { DataResponse } from "@/apis/api";
+import Link from "next/link";
 
 interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
@@ -124,6 +126,9 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [editingKey, setEditingKey] = useState(0);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
+  const [searchText, setSearchText] = useState("");
 
   const category = new CategoryAPI();
   const subCategory = new SubCategoryAPI();
@@ -196,6 +201,9 @@ export default function Home() {
           </span>
         ) : (
           <>
+            <Link href={`/dashboard/product/${record.id}`} className="text-sm">
+              <Button className="mr-2">Detail</Button>
+            </Link>
             <Typography.Link
               disabled={editingKey !== 0}
               onClick={() => edit(record)}
@@ -299,14 +307,35 @@ export default function Home() {
 
   const queryClient = useQueryClient();
 
+  // const {
+  //   data: productsData,
+  //   isPending,
+  //   isError,
+  //   error,
+  // } = useQuery<DataResponse>({
+  //   queryKey: ["product", "getall"],
+  //   queryFn: () => product.getProducts(),
+  // });
+
   const {
     data: productsData,
     isPending,
     isError,
     error,
   } = useQuery<DataResponse>({
-    queryKey: ["product", "getall"],
-    queryFn: () => product.getProducts(),
+    queryKey: [
+      "product",
+      "getall",
+      selectedCategory,
+      selectedSubCategory,
+      searchText,
+    ],
+    queryFn: () =>
+      product.getProductsByCat(
+        selectedCategory,
+        selectedSubCategory,
+        searchText
+      ),
   });
 
   const { data: categoriesData } = useQuery<DataResponse>({
@@ -329,8 +358,9 @@ export default function Home() {
   const updateProductMutation = useMutation({
     mutationFn: (updatedProduct: Product) =>
       product.updateProduct(updatedProduct),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["product", "getall"] });
+      queryClient.invalidateQueries({ queryKey: ["product", variables.id] });
     },
   });
 
@@ -348,6 +378,50 @@ export default function Home() {
         <Button type="primary" onClick={showDrawer}>
           Add
         </Button>
+      </div>
+      <div className="mb-2">
+        {categoriesData && (
+          <div className="mb-2">
+            <Radio.Group defaultValue="" size="small">
+              <Radio.Button value="" onClick={() => setSelectedCategory("")}>
+                All
+              </Radio.Button>
+              {categoriesData.data.map((category: Category) => (
+                <Radio.Button
+                  value={category.name}
+                  onClick={() => setSelectedCategory(category.name)}
+                >
+                  {category.name}
+                </Radio.Button>
+              ))}
+            </Radio.Group>
+          </div>
+        )}
+
+        {subcategoriesData && (
+          <div className="mb-2">
+            <Radio.Group defaultValue="" size="small">
+              <Radio.Button value="" onClick={() => setSelectedSubCategory("")}>
+                All
+              </Radio.Button>
+              {subcategoriesData.data.map((subcategory: SubCategory) => (
+                <Radio.Button
+                  value={subcategory.name}
+                  onClick={() => setSelectedSubCategory(subcategory.name)}
+                >
+                  {subcategory.name}
+                </Radio.Button>
+              ))}
+            </Radio.Group>
+          </div>
+        )}
+
+        <Input
+          size="small"
+          style={{ width: "40%" }}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search..."
+        />
       </div>
 
       {updateProductMutation.isPending && <div>Updating product data...</div>}

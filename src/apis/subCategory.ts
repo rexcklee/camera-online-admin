@@ -14,6 +14,10 @@ export default class SubCategoryAPI extends API {
         return this.get("subcategory/get_all", false);
     }
 
+    public async getSubCategoriesByCat(categoryName: string): Promise<DataResponse> {
+        return this.post("subcategory/get_by_cat", { categoryName: categoryName }, false);
+    }
+
     public async addSubCategory(newSubCategory: SubCategory): Promise<DataResponse> {
         return this.post("subcategory/add", newSubCategory, true);
     }

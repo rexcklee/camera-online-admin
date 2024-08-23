@@ -15,6 +15,10 @@ export default class ProductAPI extends API {
         return this.get("product/get_all", false);
     }
 
+    public async getProductsByCat(selectedCat: string, selectedSubCat: string, searchText: string): Promise<DataResponse> {
+        return this.post("product/get_by_cat", { selectedCat, selectedSubCat, searchText }, false);
+    }
+
     public async getProductsById(id: string): Promise<DataResponse> {
         return this.post("product/get_byId", { id }, false);
     }

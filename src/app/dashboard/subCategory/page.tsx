@@ -16,6 +16,7 @@ import {
   Typography,
   InputNumber,
   Select,
+  Radio,
 } from "antd";
 
 import { useEffect, useState } from "react";
@@ -92,6 +93,7 @@ export default function Home() {
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [editingKey, setEditingKey] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const category = new CategoryAPI();
   const subCategory = new SubCategoryAPI();
@@ -239,14 +241,24 @@ export default function Home() {
 
   const queryClient = useQueryClient();
 
+  // const {
+  //   data: subcategoriesData,
+  //   isPending,
+  //   isError,
+  //   error,
+  // } = useQuery<DataResponse>({
+  //   queryKey: ["subcategory", "getall"],
+  //   queryFn: () => subCategory.getSubCategories(),
+  // });
+
   const {
     data: subcategoriesData,
     isPending,
     isError,
     error,
   } = useQuery<DataResponse>({
-    queryKey: ["subcategory", "getall"],
-    queryFn: () => subCategory.getSubCategories(),
+    queryKey: ["subcategory", "getall", selectedCategory],
+    queryFn: () => subCategory.getSubCategoriesByCat(selectedCategory),
   });
 
   const { data: categoriesData } = useQuery<DataResponse>({
@@ -280,7 +292,7 @@ export default function Home() {
   return (
     <div className="min-h-full">
       <div className="flex justify-between">
-        <h1 className="mb-2 text-xl">Sub-Category</h1>
+        <h1 className="mb-4 text-xl">Sub-Category</h1>
         <Button type="primary" onClick={showDrawer}>
           Add
         </Button>
@@ -288,6 +300,24 @@ export default function Home() {
 
       {updateSubCategoryMutation.isPending && (
         <span>Updating sub-categories data...</span>
+      )}
+
+      {categoriesData && (
+        <div className="mb-2">
+          <Radio.Group defaultValue="" size="small">
+            <Radio.Button value="" onClick={() => setSelectedCategory("")}>
+              All
+            </Radio.Button>
+            {categoriesData.data.map((category: Category) => (
+              <Radio.Button
+                value={category.name}
+                onClick={() => setSelectedCategory(category.name)}
+              >
+                {category.name}
+              </Radio.Button>
+            ))}
+          </Radio.Group>
+        </div>
       )}
 
       {isPending && <span>Loading sub-categories data...</span>}

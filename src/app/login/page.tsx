@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAPI, { User } from "@/apis/user";
 import API from "@/apis/api";
@@ -9,11 +9,13 @@ import Cookies from "js-cookie";
 
 export default function Login() {
   const { token, setToken, setCurrentUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const [form] = Form.useForm();
   const user = new UserAPI();
 
   const onFinish = (input: User) => {
+    setIsLoading(true);
     const checkTokenExpiration = () => {
       API.setCurrentUserToLocalStorage(null);
       API.setTokenToLocalStorage(null);
@@ -38,6 +40,7 @@ export default function Login() {
       }
       setTimeout(checkTokenExpiration, res.data.expire_in * 1000);
       router.replace("/dashboard/category");
+      setIsLoading(false);
     });
   };
 
@@ -75,7 +78,7 @@ export default function Login() {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
-                Login
+                {isLoading ? "Loading..." : "Login"}
               </Button>
             </Space>
           </Form.Item>
