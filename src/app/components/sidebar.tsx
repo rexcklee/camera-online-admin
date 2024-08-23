@@ -49,6 +49,12 @@ export const Sidebar: React.FC = () => {
               Product
             </Link>
           </li>
+          <li key="Attribute" className="mb-2">
+            <Link href="/dashboard/attribute" className="text-sm">
+              <BsCamera className="h-3 w-3 inline-block mr-2" />
+              Attribute
+            </Link>
+          </li>
           <li key="User" className="mb-2">
             <Link href="/dashboard/user" className="text-sm">
               <BsPerson className="h-3 w-3 inline-block mr-2" />

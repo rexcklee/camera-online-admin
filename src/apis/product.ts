@@ -12,8 +12,11 @@ export interface Product {
 
 export default class ProductAPI extends API {
     public async getProducts(): Promise<DataResponse> {
-        console.log('get product start');
         return this.get("product/get_all", false);
+    }
+
+    public async getProductsById(id: string): Promise<DataResponse> {
+        return this.post("product/get_byId", { id }, false);
     }
 
     public async addProduct(newProduct: Product): Promise<DataResponse> {
